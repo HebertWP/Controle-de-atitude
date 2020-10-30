@@ -1,69 +1,117 @@
-//Programa : Teste MPU6050 e LCD 20x4
-//Alteracoes e adaptacoes : FILIPEFLOP
-//
-//Baseado no programa original de JohnChi
+// Basic demo for accelerometer readings from Adafruit MPU6050
 
-//Bibliotecas traticionais do arduino
-#include<Arduino.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <Wire.h>
 
-//Carrega a biblioteca Wire
-#include<Wire.h>
+Adafruit_MPU6050 mpu;
 
-//Endereco I2C do MPU6050
-const int MPU=0x68;  
-//Variaveis para armazenar valores dos sensores
-int AcX,AcY,AcZ,Tmp,GyX,GyY,GyZ;
-void setup()
-{
+void setup(void) {
   Serial.begin(115200);
-  //Inicializa o LCD
-  Wire.begin();
-  Wire.beginTransmission(MPU);
-  Wire.write(0x6B); 
-  
-  //Inicializa o MPU-6050
-  Wire.write(0); 
-  Wire.endTransmission(true);
-    
+  while (!Serial)
+    delay(10); // will pause Zero, Leonardo, etc until serial console opens
+
+  Serial.println("Adafruit MPU6050 test!");
+
+  // Try to initialize!
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1) {
+      delay(10);
+    }
+  }
+  Serial.println("MPU6050 Found!");
+
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  Serial.print("Accelerometer range set to: ");
+  switch (mpu.getAccelerometerRange()) {
+  case MPU6050_RANGE_2_G:
+    Serial.println("+-2G");
+    break;
+  case MPU6050_RANGE_4_G:
+    Serial.println("+-4G");
+    break;
+  case MPU6050_RANGE_8_G:
+    Serial.println("+-8G");
+    break;
+  case MPU6050_RANGE_16_G:
+    Serial.println("+-16G");
+    break;
+  }
+  mpu.setGyroRange(MPU6050_RANGE_500_DEG);
+  Serial.print("Gyro range set to: ");
+  switch (mpu.getGyroRange()) {
+  case MPU6050_RANGE_250_DEG:
+    Serial.println("+- 250 deg/s");
+    break;
+  case MPU6050_RANGE_500_DEG:
+    Serial.println("+- 500 deg/s");
+    break;
+  case MPU6050_RANGE_1000_DEG:
+    Serial.println("+- 1000 deg/s");
+    break;
+  case MPU6050_RANGE_2000_DEG:
+    Serial.println("+- 2000 deg/s");
+    break;
+  }
+
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+  Serial.print("Filter bandwidth set to: ");
+  switch (mpu.getFilterBandwidth()) {
+  case MPU6050_BAND_260_HZ:
+    Serial.println("260 Hz");
+    break;
+  case MPU6050_BAND_184_HZ:
+    Serial.println("184 Hz");
+    break;
+  case MPU6050_BAND_94_HZ:
+    Serial.println("94 Hz");
+    break;
+  case MPU6050_BAND_44_HZ:
+    Serial.println("44 Hz");
+    break;
+  case MPU6050_BAND_21_HZ:
+    Serial.println("21 Hz");
+    break;
+  case MPU6050_BAND_10_HZ:
+    Serial.println("10 Hz");
+    break;
+  case MPU6050_BAND_5_HZ:
+    Serial.println("5 Hz");
+    break;
+  }
+
+  Serial.println("");
+  delay(100);
 }
-void loop()
-{
-  Wire.beginTransmission(MPU);
-  Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
-  Wire.endTransmission(false);
-  //Solicita os dados do sensor
-  Wire.requestFrom(MPU,14,true);  
-  //Armazena o valor dos sensores nas variaveis correspondentes
-  AcX=Wire.read()<<8|Wire.read();  //0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)     
-  AcY=Wire.read()<<8|Wire.read();  //0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
-  AcZ=Wire.read()<<8|Wire.read();  //0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
-  Tmp=Wire.read()<<8|Wire.read();  //0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
-  GyX=Wire.read()<<8|Wire.read();  //0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
-  GyY=Wire.read()<<8|Wire.read();  //0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
-  GyZ=Wire.read()<<8|Wire.read();  //0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
-  
-  //Envia valor X do acelerometro para a serial e o LCD
-  Serial.print("AcX = "); Serial.print(AcX);
 
-  //Envia valor Y do acelerometro para a serial e o LCD
-  Serial.print(" | AcY = "); Serial.print(AcY);
-  
-  //Envia valor Z do acelerometro para a serial
-  Serial.print(" | AcZ = "); Serial.print(AcZ);
-  
-  //Envia valor da temperatura para a serial
-  //Calcula a temperatura em graus Celsius
-  Serial.print(" | Tmp = "); Serial.print(Tmp/340.00+36.53);
-  
-  //Envia valor X do giroscopio para a serial
-  Serial.print(" | GyX = "); Serial.print(GyX);
-  
-  //Envia valor Y do giroscopio para a serial  
-  Serial.print(" | GyY = "); Serial.print(GyY);
+void loop() {
 
-  //Envia valor Z do giroscopio para a serial
-  Serial.print(" | GyZ = "); Serial.println(GyZ);
-  
-  //Aguarda 300 ms e reinicia o processo
-  delay(300);
+  /* Get new sensor events with the readings */
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  /* Print out the values */
+  Serial.print("Acceleration X: ");
+  Serial.print(a.acceleration.x);
+  Serial.print(", Y: ");
+  Serial.print(a.acceleration.y);
+  Serial.print(", Z: ");
+  Serial.print(a.acceleration.z);
+  Serial.println(" m/s^2");
+
+  Serial.print("Rotation X: ");
+  Serial.print(g.gyro.x);
+  Serial.print(", Y: ");
+  Serial.print(g.gyro.y);
+  Serial.print(", Z: ");
+  Serial.print(g.gyro.z);
+  Serial.println(" rad/s");
+
+  Serial.print("Temperature: ");
+  Serial.print(temp.temperature);
+  Serial.println(" degC");
+
+  Serial.println("");
+  delay(500);
 }
