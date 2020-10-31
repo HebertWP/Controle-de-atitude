@@ -1,0 +1,24 @@
+#ifndef __InertialMesure_H__
+#define __InertialMesure_H__
+
+#include <Arduino.h>
+#include <FreeRTOS/semphr.h>
+
+class InertialMesure
+{
+private:
+    static void loop(void *arg);
+    static double* _acceleration;
+    static double* _rotation;
+    
+public:
+    static void init(uint8_t sda = -1, uint8_t scl = -1);
+    static double * getAcceleration();
+    static double * getRotation();
+
+public:
+    static SemaphoreHandle_t _semaphore;
+
+};
+
+#endif
