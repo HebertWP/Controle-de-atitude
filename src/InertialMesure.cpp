@@ -1,3 +1,5 @@
+#if defined(ESP)
+
 #include "InertialMesure.h"
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>
@@ -80,3 +82,5 @@ double *InertialMesure::getRotation(){
     }
     return out;
 };
+
+#endif

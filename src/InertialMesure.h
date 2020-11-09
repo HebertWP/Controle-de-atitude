@@ -1,3 +1,4 @@
+#if defined(ESP)
 #ifndef __InertialMesure_H__
 #define __InertialMesure_H__
 
@@ -7,18 +8,17 @@
 class InertialMesure
 {
 private:
+    static SemaphoreHandle_t _semaphore;
     static void loop(void *arg);
-    static double* _acceleration;
-    static double* _rotation;
-    
-public:
-    static void init(uint8_t sda = -1, uint8_t scl = -1);
-    static double * getAcceleration();
-    static double * getRotation();
+    static double *_acceleration;
+    static double *_rotation;
 
 public:
-    static SemaphoreHandle_t _semaphore;
+    static void init(uint8_t sda = -1, uint8_t scl = -1);
+    static double *getAcceleration();
+    static double *getRotation();
 
 };
 
+#endif
 #endif
