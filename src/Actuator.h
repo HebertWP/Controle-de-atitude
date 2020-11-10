@@ -7,10 +7,11 @@ class Actuator
 private:
     float _power;
     uint8_t _en;
-    uint8_t *_dir;
+    uint8_t _dir1;
+    uint8_t _dir2;
     
 public:
-    Actuator(uint8_t en, uint8_t *dir);
+    Actuator(uint8_t en, uint8_t dir1, uint8_t dir2);
     void init(); 
     void setPower(float power);
 };

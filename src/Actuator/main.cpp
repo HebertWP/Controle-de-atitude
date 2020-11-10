@@ -1,12 +1,16 @@
 #include <Arduino.h>
 #include "Actuator.h"
-int a[3]={2,2,3};
 
+Actuator mot1= Actuator(1, 2, 3);
 void setup()
 {
-    Actuator::init(3,{2,4},1,{4,2});
+    mot1.init();
 }
 
 void loop()
 {
+    for(float i = 0; i <256 ; i++){
+        mot1.setPower(i);
+        delay(100);
+    }
 }

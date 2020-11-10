@@ -1,12 +1,11 @@
 #include "Actuator.h"
 #include <Arduino.h>
 
-Actuator::Actuator(uint8_t en, uint8_t *dir)
+Actuator::Actuator(uint8_t en, uint8_t dir1, uint8_t dir2)
 {
-    this->_dir = (uint8_t *)calloc(2, sizeof(uint8_t));
+    this->_dir1 = dir1;
+    this->_dir2 = dir2;
     this->_en = en;
-    this->_dir[0] = dir[0];
-    this->_dir[1] = dir[1];
 }
 
 void Actuator::init()
@@ -15,8 +14,8 @@ void Actuator::init()
     //ledcAttachPin(ledPin, ledChannel);
 
     pinMode(_en, OUTPUT);
-    pinMode(_dir[0], OUTPUT);
-    pinMode(_dir[1], OUTPUT);
+    pinMode(_dir1, OUTPUT);
+    pinMode(_dir2, OUTPUT);
     this->setPower(0);
 };
 
@@ -25,14 +24,14 @@ void Actuator::setPower(float power)
     if (power < 0)
     {
         //analogWrite(_en, -(power)*255);
-        digitalWrite(_dir[0], HIGH);
-        digitalWrite(_dir[1], LOW);
+        digitalWrite(_dir1, HIGH);
+        digitalWrite(_dir2, LOW);
     }
     else
     {
         //analogWrite(_en, power * 255);
-        digitalWrite(_dir[1], HIGH);
-        digitalWrite(_dir[0], LOW);
+        digitalWrite(_dir1, HIGH);
+        digitalWrite(_dir2, LOW);
     }
     _power = power;
 }
