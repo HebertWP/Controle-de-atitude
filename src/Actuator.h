@@ -1,7 +1,6 @@
 #ifndef __Actuator_H__
 #define __Actuator_H__
 #include <Arduino.h>
-
 class Actuator
 {
 private:
