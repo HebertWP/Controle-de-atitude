@@ -1,47 +1,83 @@
-#include <ThingerESP32.h>
+#include "ComunicationSystem.h"
 #include "PassWordFile.h"
 #include <math.h>
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
 double ace[3];
 double rot[3];
-ThingerESP32 thing(USERNAME_THINGER, DEVICE_ID_THINGER, DEVICE_CREDENTIAL_THINGER);
+ComunicationSystem thing; //(USERNAME_THINGER, DEVICE_ID_THINGER, DEVICE_CREDENTIAL_THINGER);
 pson out;
-int parameter = 0;
-
+boolean stabilize = 0;
 void setup()
 {
     Serial.begin(115200);
+    Serial.println("Booting");
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_NAME, WIFI_PASS);
+
+    while (WiFi.waitForConnectResult() != WL_CONNECTED)
+    {
+        Serial.println("Connection Failed! Rebooting...");
+        delay(5000);
+        ESP.restart();
+    }
+    ArduinoOTA
+        .onStart([]() {
+            String type;
+            if (ArduinoOTA.getCommand() == U_FLASH)
+                type = "sketch";
+            else // U_SPIFFS
+                type = "filesystem";
+
+            // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
+            Serial.println("Start updating " + type);
+        })
+        .onEnd([]() {
+            Serial.println("\nEnd");
+        })
+        .onProgress([](unsigned int progress, unsigned int total) {
+            Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+        })
+        .onError([](ota_error_t error) {
+            Serial.printf("Error[%u]: ", error);
+            if (error == OTA_AUTH_ERROR)
+                Serial.println("Auth Failed");
+            else if (error == OTA_BEGIN_ERROR)
+                Serial.println("Begin Failed");
+            else if (error == OTA_CONNECT_ERROR)
+                Serial.println("Connect Failed");
+            else if (error == OTA_RECEIVE_ERROR)
+                Serial.println("Receive Failed");
+            else if (error == OTA_END_ERROR)
+                Serial.println("End Failed");
+        });
+
+    ArduinoOTA.begin();
+
+    Serial.println("Ready");
+    Serial.print("IP address: ");
+
+    Serial.println(WiFi.localIP());
+
     Serial.println("Starting...");
 
-    pinMode(LED_BUILTIN, OUTPUT);
-    out = ace[0];
-    thing.add_wifi(WIFI_NAME, WIFI_PASS);
+    thing["stabilize"] << inputValue(stabilize);
 
-    thing["enable_disable"] << inputValue(parameter);
-
-    thing["Acelaracao"] >> [](pson &out) {
-        out["X"] = ace[0];
-        out["Y"] = ace[1];
-        out["Z"] = ace[2];
-    };
-    thing["Rotacao"] >> [](pson &out) {
+    /*    thing["Rotacao"] >> [](pson &out) {
         out["X"] = rot[0];
         out["Y"] = rot[1];
         out["Z"] = rot[2];
     };
-
-    // more details at http://docs.thinger.io/arduino/
+*/
     Serial.println("Started");
 }
 
 void loop()
 {
-    for (float i = 0; i < 2 * PI; i = i + 0.2)
-    {
-        ace[0] = sin(i);
-        ace[1] = -ace[0];
-        ace[2] = cos(i);
-        thing.handle();
-        Serial.println(parameter);
-        delay(10);
-    }
+    Serial.println(stabilize);
+    thing.handle();
+    ArduinoOTA.handle();
+    delay(10);
 }
