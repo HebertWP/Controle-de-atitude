@@ -37,7 +37,10 @@ void InertialMesure::loop(void *arg)
     if (xSemaphoreTake(InertialMesure::_semaphore, (TickType_t)20) == pdTRUE)
     {
         if (!mpu.begin())
+        {
+            Serial.println("MPU not find");
             ESP.restart();
+        }
 
         mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
         mpu.setGyroRange(MPU6050_RANGE_500_DEG);
@@ -72,7 +75,8 @@ double *InertialMesure::getAcceleration()
     }
     return out;
 };
-double *InertialMesure::getRotation(){
+double *InertialMesure::getRotation()
+{
     static double out[3];
     if (xSemaphoreTake(InertialMesure::_semaphore, (TickType_t)20) == pdTRUE)
     {
