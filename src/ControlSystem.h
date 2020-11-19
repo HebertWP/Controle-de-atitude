@@ -1,4 +1,4 @@
-#if defined(ESP)
+#if defined(ESP32)
 #ifndef __ControlSystem_H__
 #define __ControlSystem_H__
 
@@ -10,14 +10,17 @@ class ControlSystem
 {
 private:
     static SemaphoreHandle_t _semaphore;
+    static Actuator *_motor1;
+    static bool  _stop;
+    static double _kp;
+    static double _ki;
+    static TaskHandle_t _xHandle;
     static void loop(void *arg);
-    static Actuator* _motor1; 
-    static Actuator* _motor2;
-    static float _ref1;
-    static float _ref2;
+     
 public:
-    static void init(Actuator* motor1, Actuator* motor2);
-    static void setref(uint8_t eix, float ref);
+    static void init(Actuator * motor1);
+    static void turnON();
+    static void turnOFF();
 };
 
 #endif

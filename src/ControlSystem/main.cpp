@@ -1,16 +1,24 @@
-#include <ControlSystem.h>
-#include <PassWordFile.h>
 #include <WiFi.h>
-#include <ESPmDNS.h>
-#include <WiFiUdp.h>
+#include <Arduino.h>
+#include <Actuator.h>
+#include <PassWordFile.h>
 #include <ArduinoOTA.h>
-#include <InertialMesure.h>
+#include "InertialMesure.h"
+#include "ControlSystem.h"
+
+#define AEN 17
+#define A1 18
+#define A2 5
+WiFiServer sv(555); //Cria o objeto servidor na porta 555
+WiFiClient cl;      //Cria o objeto cliente.
+Actuator motor1(AEN, A1, A2);
+void tcp();
 void setup()
 {
-    Serial.begin(115200);
-    Serial.println("Booting");
+    Serial.begin(115200); //Habilita a comm serial.
+    motor1.init();
     InertialMesure::init();
-    ControlSystem::init();
+    ControlSystem::init(&motor1);
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_NAME, WIFI_PASS);
 
@@ -20,6 +28,7 @@ void setup()
         delay(5000);
         ESP.restart();
     }
+
     ArduinoOTA
         .onStart([]() {
             String type;
@@ -53,11 +62,48 @@ void setup()
 
     ArduinoOTA.begin();
 
-    Serial.println("Ready");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+    sv.begin(); //Inicia o servidor TCP na porta declarada no começo.
 }
+
 void loop()
 {
     ArduinoOTA.handle();
+    tcp(); //Funçao que gerencia os pacotes e clientes TCP.
+}
+
+void tcp()
+{
+    if (cl.connected()) //Detecta se há clientes conectados no servidor.
+    {
+        if (cl.available() > 0) //Verifica se o cliente conectado tem dados para serem lidos.
+        {
+            char read[2];
+            int i = 0;
+            while (cl.available() > 0) //Armazena cada Byte (letra/char) na String para formar a mensagem recebida.
+            {
+                char z = cl.read();
+                read[i++] = z;
+            }
+            switch (read[0])
+            {
+            case 'E':
+                cl.println("Reset");
+                ESP.restart();
+                break;
+            case 'O':
+                cl.println("Turn ON");
+                ControlSystem::turnON();
+                break;
+            case 'F':
+                cl.println("Turn OFF");
+                ControlSystem::turnOFF();
+                break;
+            }
+        }
+    }
+    else //Se nao houver cliente conectado,
+    {
+        cl = sv.available(); //Disponabiliza o servidor para o cliente se conectar.
+        delay(1);
+    }
 }
