@@ -116,7 +116,7 @@
 #define ERRO_1 "there is nothing in address"
 #define ERRO_2 "MPU don't gve the correct answer"
 #define ERRO_3 "Please learn how to use the library"
-
+#define ERRO_4 "It's not reading "
 class MPU6050
 {
 public:
@@ -137,34 +137,41 @@ private:
     uint8_t _sda_pin;
     uint8_t _scl_pin;
     uint8_t _int_pin;
-    int _edr_mpu;
-    uint8_t _gyr_scale;
-    uint8_t _acc_scale;
-    uint8_t _dlpf;
-    bool _int_enable;
+    int8_t _edr_mpu;
+    int8_t _gyr_scale;
+    int8_t _acc_scale;
+    int8_t _dlpf;
+    int8_t _FIFO;
+    uint8_t _freq;
     uint16_t _num_samples;
     float *_samples;
+    bool _int_enable;
     float _A_LSB;
     float _G_LSB;
+    int _i;
+    bool _reading; 
+
 public:
     MPU6050(uint8_t int_pin,
             uint8_t sda_pin,
             uint8_t scl_pin,
-            uint16_t num_samples = 100,
+            uint16_t freq = 250,
+            uint16_t num_samples = 1000,
             int edr_mpu = MPU_ADDR,
-            uint8_t gyr_scale = G_CFG_250,
-            uint8_t acc_scale = A_CFG_2G,
-            uint8_t dlpf = DLPF_CFG_FILTER_1,
-            bool int_enable = true);
+            int8_t gyr_scale = G_CFG_2000,
+            int8_t acc_scale = A_CFG_2G,
+            int8_t dlpf = DLPF_CFG_FILTER_1,
+            int8_t fifo = FIFO_CFG_GZ);
     
     void init();
     
-    /**
-     * @brief read sensor in time period 
-     * 
-     * @return float* 
-     */
-    float * readRawMPU();
+    void starRead();
+    
+    void reading();
+    
+    bool isReadDone();
+    
+    float *read();
     
     /**
      * @brief Set the Gyro Scale object
@@ -219,13 +226,48 @@ public:
      * @param on 
      */
     void enableInt(bool on=true);
-
+    
     void setNumSamples(uint16_t num);
 
+    /**
+     * @brief Enable FIFO
+     *  Register (Hex)  |   Register(Decimal)   |Bit7|  Bit6    |   Bit5    |   Bit4    |Bit3|  Bit2        |   Bit1        |   Bit0        |
+     *  6A              |   106                 | -  |FIFO_EN   |I2C_MST_EN |I2C_IF_DIS | -  |FIFO_RESET    |I2C_MST_RESET  |SIG_COND_RESET |
+     * FIFO_EN:         When set to 1, this bit enables FIFO operations.When this  bit  is cleared  to  0,  the  FIFO  buffer is  disabled.
+     *                  The  FIFO  buffer cannot be written to or read from while disabled.
+     *                  The  FIFO  buffer’sstatedoes  not  change  unless the  MPU-60X0is  power cycled.
+     * I2C_MST_EN:      When set to 1, this bit enablesI2C Master Mode. When this  bit  is cleared  to  0, the auxiliary  I2C  bus  lines  (AUX_DA  and AUX_CL) are logically driven by the primary I2C bus (SDA and SCL).
+     * I2C_IF_DIS:      MPU-6000:When  set  to  1,  this  bit disablesthe  primary  I2C  interface  and enablesthe SPI interfaceinstead.MPU-6050: Always write this bit as zero.
+     * FIFO_RESET:      This bit resetsthe FIFO  bufferwhen set to 1 while FIFO_EN equals  0. This bit automatically clears to 0 after the reset has been triggered.
+     * I2C_MST_RESET:   This  bit  resets  the  I2C Master  when  set  to  1while I2C_MST_EN equals 0.This bit automatically clears to 0 afterthe reset has been triggered.
+     * SIG_COND_RESET:  When  set  to  1,  this  bit  resetsthe  signal  paths  for  all  sensors  (gyroscopes, accelerometers,  and  temperature  sensor).  This operation will  also  clear  the sensor  registers.This  bit  automatically  clears  to  0  after  the  reset  has  been triggered. When  resetting  only  the  signal  path  (and  not  the  sensor  registers),  please use Register 104, SIGNAL_PATH_RESET.
+     */
+    void enableFIFO();
+    
+    /**
+     * @brief Set FIFO
+     *  Register (Hex) |    Register(Decimal)   |   Bit7        |   Bit6        |   Bit5        |   Bit4        |   Bit3        |   Bit2        |   Bit1        |    Bit0       |
+     *  23             |    35                  |TEMP_ FIFO_EN  |XG_ FIFO_EN    |YG_ FIFO_EN    |ZG_ FIFO_EN    |ACCEL_FIFO_EN  |SLV2_FIFO_EN   |SLV1_FIFO_EN   |SLV0_FIFO_EN   |
+     * @param fifo 
+     */
+    void setFIFO(uint8_t fifo);
+
+    /**
+     * @brief Set the Freq object
+     *  1~1000 Hz
+     * @param freq 
+     */
+    void setFreq(uint16_t freq);
+
 private:
+    
     void checkConnection();
     void writeRegMPU(int reg, int val);
     uint8_t readRegMPU(uint8_t reg);
+    uint16_t readTwoRegMPU(uint8_t reg);
+    static bool ready;
+    static void IRAM_ATTR ISR();
+
 };
 
 #endif

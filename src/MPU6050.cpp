@@ -2,7 +2,9 @@
 #include <Wire.h>
 #include "MPU6050.h"
 
-MPU6050::MPU6050(uint8_t sda_pin, uint8_t scl_pin, uint8_t int_pin, uint16_t num_samples, int edr_mpu, uint8_t gyr_scale, uint8_t acc_scale, uint8_t dlpf, bool int_enable)
+bool MPU6050::ready = false;
+
+MPU6050::MPU6050(uint8_t sda_pin, uint8_t scl_pin, uint8_t int_pin, uint16_t freq, uint16_t num_samples, int edr_mpu, int8_t gyr_scale, int8_t acc_scale, int8_t dlpf, int8_t fifo)
 {
     _scl_pin = scl_pin;
     _sda_pin = sda_pin;
@@ -11,9 +13,13 @@ MPU6050::MPU6050(uint8_t sda_pin, uint8_t scl_pin, uint8_t int_pin, uint16_t num
     _gyr_scale = gyr_scale;
     _acc_scale = acc_scale;
     _dlpf = dlpf;
-    _int_enable = int_enable;
+    _int_enable = true;
+    _FIFO = fifo;
+    _freq = (1000 - freq) / freq;
     _num_samples = num_samples;
     _samples = NULL;
+    _i = 0;
+    _reading = false;
 }
 
 void MPU6050::init()
@@ -25,60 +31,57 @@ void MPU6050::init()
     this->setGyroScale(_gyr_scale);
     this->setAccelScale(_acc_scale);
     this->setDLPF(_dlpf);
+    this->setFreq(1000 / (1 + _freq));
     this->enableInt(_int_enable);
+    this->enableFIFO();
+    this->setFIFO(_FIFO);
     this->setNumSamples(_num_samples);
     pinMode(_int_pin, INPUT);
 }
 
-float *MPU6050::readRawMPU()
+void MPU6050::starRead()
 {
     this->checkConnection();
+    _i = 0;
+    _reading = true;
 
-    int16_t AcX, AcY, AcZ, GyX, GyY, GyZ, Tmp;
-    
-    
-    int y = 0;
-    for (int i = 0; i < _num_samples; i++)
+    this->enableFIFO();
+    MPU6050::ready=false;
+    attachInterrupt(_int_pin, MPU6050::ISR, RISING);
+}
+
+void MPU6050::reading()
+{
+    Serial.printf("%i\n",_i);
+    if (!_reading)
+        throw MPU6050::Exception(ERRO_4);
+    if (!MPU6050::ready)
+        return;
+
+    MPU6050::ready = false;
+    uint16_t tam;
+    int16_t a;
+
+    tam = this->readTwoRegMPU(REG_FIFO_COUNT_H);
+    for (int i = 0; i < tam / 2 && _i <_num_samples; i++)
     {
-        while (digitalRead(_int_pin) == LOW)
-            ;
-        Wire.beginTransmission(_edr_mpu);
-        Wire.write(REG_AX_H);
-        Wire.endTransmission(false);
-        Wire.requestFrom(MPU_ADDR, 14);
-
-        AcX = Wire.read() << 8;
-        AcX |= Wire.read();
-        _samples[y++] = ((float)AcX) / _A_LSB;
-
-        AcY = Wire.read() << 8;
-        AcY |= Wire.read();
-        _samples[y++] = ((float)AcY) / _A_LSB;
-
-        AcZ = Wire.read() << 8;
-        AcZ |= Wire.read();
-        _samples[y++] = ((float)AcZ) / _A_LSB;
-
-        Tmp = Wire.read() << 8;
-        Tmp |= Wire.read();
-        _samples[y++] = Tmp / 340 + 36.53;
-
-        GyX = Wire.read() << 8;
-        GyX |= Wire.read();
-        _samples[y++] = ((float)GyX) / _G_LSB;
-
-        GyY = Wire.read() << 8;
-        GyY |= Wire.read();
-        _samples[y++] = ((float)GyY) / _G_LSB;
-
-        GyZ = Wire.read() << 8;
-        GyZ |= Wire.read();
-        _samples[y++] = ((float)GyZ) / _G_LSB;
-
-        while (digitalRead(_int_pin) == HIGH)
-            ;
-
+        a = this->readTwoRegMPU(REG_FIFO);
+        _samples[_i++] = ((float)a) / _G_LSB;
     }
+    if (_i == _num_samples)
+    {
+        detachInterrupt(_int_pin);
+        _reading = false;
+    }
+}
+
+bool MPU6050::isReadDone()
+{
+    return !(_reading);
+}
+
+float *MPU6050::read()
+{
     return _samples;
 }
 
@@ -162,12 +165,32 @@ void MPU6050::enableInt(bool on)
         this->writeRegMPU(REG_INTR_EN, INTR_DISABLE);
 }
 
+void MPU6050::enableFIFO()
+{
+    this->checkConnection();
+    this->writeRegMPU(REG_USER_CTRL, USER_CTRL_FIFO_EN | USER_CTRL_FIFO_RST);
+}
+
+void MPU6050::setFIFO(uint8_t fifo)
+{
+    _FIFO = fifo;
+    this->checkConnection();
+    this->writeRegMPU(REG_FIFO_CFG, _FIFO);
+}
+
+void MPU6050::setFreq(uint16_t freq)
+{
+    _freq = (1000 - freq) / freq;
+    this->checkConnection();
+    this->writeRegMPU(REG_SAMPLE_RATE_DIV, _freq);
+}
+
 void MPU6050::setNumSamples(uint16_t num)
 {
     _num_samples = num;
     if (_samples != NULL)
         free((void *)_samples);
-    _samples = (float *)malloc(num * sizeof(float) * 7);
+    _samples = (float *)calloc(_num_samples, sizeof(float));
 }
 
 void MPU6050::checkConnection()
@@ -201,4 +224,25 @@ uint8_t MPU6050::readRegMPU(uint8_t reg)
     Wire.requestFrom(_edr_mpu, (int)1);
     data = Wire.read();
     return data;
+}
+
+uint16_t MPU6050::readTwoRegMPU(uint8_t reg)
+{
+    uint16_t data;
+    Wire.beginTransmission(_edr_mpu);
+
+    Wire.beginTransmission(_edr_mpu);
+    Wire.write(reg);
+    Wire.endTransmission(false);
+    Wire.requestFrom(_edr_mpu, 2);
+
+    data = Wire.read() << 8;
+    data |= Wire.read();
+
+    return data;
+}
+
+void IRAM_ATTR MPU6050::ISR()
+{
+    MPU6050::ready = true;
 }
