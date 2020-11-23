@@ -13,6 +13,7 @@ public:
     Actuator(uint8_t en, uint8_t dir1, uint8_t dir2);
     void init(); 
     void setPower(float power);
+    float getPower();
 };
 
 #endif

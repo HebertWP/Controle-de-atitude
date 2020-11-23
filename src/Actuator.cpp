@@ -46,3 +46,7 @@ void Actuator::setPower(float power)
     }
     _power = power;
 }
+
+float Actuator::getPower(){
+    return _power;
+}
