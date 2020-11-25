@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "MPU6050.h"
+#include "statistic.h"
 
 bool MPU6050::ready = false;
 
@@ -46,13 +47,13 @@ void MPU6050::starRead()
     _reading = true;
 
     this->enableFIFO();
-    MPU6050::ready=false;
+    MPU6050::ready = false;
     attachInterrupt(_int_pin, MPU6050::ISR, RISING);
 }
 
 void MPU6050::reading()
 {
-    Serial.printf("%i\n",_i);
+    Serial.printf("%i\n", _i);
     if (!_reading)
         throw MPU6050::Exception(ERRO_4);
     if (!MPU6050::ready)
@@ -63,7 +64,7 @@ void MPU6050::reading()
     int16_t a;
 
     tam = this->readTwoRegMPU(REG_FIFO_COUNT_H);
-    for (int i = 0; i < tam / 2 && _i <_num_samples; i++)
+    for (int i = 0; i < tam / 2 && _i < _num_samples; i++)
     {
         a = this->readTwoRegMPU(REG_FIFO);
         _samples[_i++] = ((float)a) / _G_LSB;
@@ -245,4 +246,14 @@ uint16_t MPU6050::readTwoRegMPU(uint8_t reg)
 void IRAM_ATTR MPU6050::ISR()
 {
     MPU6050::ready = true;
+}
+
+Statisc::Data MPU6050::statisticRead()
+{
+    Statisc::Data r;
+    for(int i =0; i <_num_samples ; i++)
+        r.mean += _samples[i]/_num_samples;
+    for(int i =0; i <_num_samples ; i++)
+        r.variance += ((_samples[i]-r.mean)*(_samples[i]-r.mean))/(_num_samples -1 );
+    return r;
 }

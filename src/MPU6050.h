@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include <exception>
+#include "statistic.h"
 
 #define MPU_ADDR 0x68
 
@@ -117,7 +118,7 @@
 #define ERRO_2 "MPU don't gve the correct answer"
 #define ERRO_3 "Please learn how to use the library"
 #define ERRO_4 "It's not reading "
-class MPU6050
+class MPU6050 : public Statisc
 {
 public:
     class Exception : public std::exception
@@ -132,7 +133,7 @@ public:
             return _msg.c_str();
         }
     };
-
+    
 private:
     uint8_t _sda_pin;
     uint8_t _scl_pin;
@@ -173,6 +174,8 @@ public:
     
     float *read();
     
+    Statisc::Data statisticRead();
+
     /**
      * @brief Set the Gyro Scale object
      * FS_SEL   | Full Scale Range  | LSB Sensitivity   | Use define 

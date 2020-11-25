@@ -111,6 +111,9 @@ void tcp()
                 for (int i = 0; i < samples - 1; i++)
                     cl.printf(" %f, ", m[i]);
                 cl.printf(" %f ]\r\n", m[samples - 1]);
+                cl.printf("Mean : %f\r\n",(mpu.statisticRead()).mean);
+                cl.printf("Variance : %f\r\n",(mpu.statisticRead()).variance);
+                
                 break;
             case 'S':
                 while (cl.available() > 0)
