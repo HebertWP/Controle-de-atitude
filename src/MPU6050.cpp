@@ -248,12 +248,19 @@ void IRAM_ATTR MPU6050::ISR()
     MPU6050::ready = true;
 }
 
-Statisc::Data MPU6050::statisticRead()
+float MPU6050::mean()
 {
-    Statisc::Data r;
+    float mean=0;
     for(int i =0; i <_num_samples ; i++)
-        r.mean += _samples[i]/_num_samples;
+        mean += _samples[i]/_num_samples;
+    return mean;
+}
+
+float MPU6050::variance()
+{
+    float mean=this->mean();
+    float variance=0;
     for(int i =0; i <_num_samples ; i++)
-        r.variance += ((_samples[i]-r.mean)*(_samples[i]-r.mean))/(_num_samples -1 );
-    return r;
+        variance += ((_samples[i]-mean)*(_samples[i]-mean))/(_num_samples -1 );
+    return variance;
 }
