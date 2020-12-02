@@ -2,16 +2,12 @@
 #define __Statistic_H__
 #include <Arduino.h>
 
-class Statisc
+class Statistic
 {
 public:
-    typedef struct Data
-    {
-        float mean;
-        float variance;
-    } Data;
-
-    virtual Statisc::Data statisticRead();
+    virtual float mean();
+    virtual float variance();
+    
 };
 
 #endif
