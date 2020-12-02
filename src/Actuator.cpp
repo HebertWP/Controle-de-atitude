@@ -1,6 +1,6 @@
 #include "Actuator.h"
 #include <Arduino.h>
-
+#ifdef ESP
 Actuator::Actuator(uint8_t en, uint8_t dir1, uint8_t dir2)
 {
     this->_dir1 = dir1;
@@ -47,3 +47,4 @@ float Actuator::getPower()
 {
     return _power;
 }
+#endif

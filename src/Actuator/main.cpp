@@ -90,7 +90,7 @@ void tcp()
                 if (-1 <= num && num <= 1)
                 {
                     motor1.setPower(num);
-                    cl.printf("Potencia do motor em : %f\%\n", motor1.getPower() * 100);
+                    cl.printf("Potencia do motor em : %f\r\n", motor1.getPower() * 100);
                 }
             }
             else

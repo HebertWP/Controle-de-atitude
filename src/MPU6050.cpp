@@ -1,3 +1,5 @@
+#ifdef ESP
+
 #include <Arduino.h>
 #include <Wire.h>
 #include "MPU6050.h"
@@ -264,3 +266,4 @@ float MPU6050::variance()
         variance += ((_samples[i]-mean)*(_samples[i]-mean))/(_num_samples -1 );
     return variance;
 }
+#endif
