@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <exception>
 #include "Statistic.h"
+#include "Sensor.h"
 
 #define MPU_ADDR 0x68
 
@@ -119,7 +120,7 @@
 #define ERRO_2 "MPU don't gve the correct answer"
 #define ERRO_3 "Please learn how to use the library"
 #define ERRO_4 "It's not reading "
-class MPU6050 : public Statistic
+class MPU6050 : public Statistic, Sensor
 {
 public:
     class Exception : public std::exception
