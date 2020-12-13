@@ -1,93 +1,64 @@
-/*
 #include <Kalman.h>
+
 using namespace BLA;
 
 #define Nstate 2 // position, speed
 #define Nobs 2   // position, speed
 
 // measurement std
-#define n_p 0.3
-#define n_s 5.0
+#define v_p 0.3
+#define v_s 5.0
 // model std (1/inertia)
 #define m_p 0.1
 #define m_s 0.1
 
+BLA::Matrix<Nobs> obs;  // observation vector
+KALMAN<Nstate, Nobs> K; // your Kalman filter
 
-BLA::Matrix<Nobs> obs; // observation vector
-KALMAN<Nstate,Nobs> K; // your Kalman filter
-
-unsigned long T;
-float dt=0.1;
+float dt = 0.1;
 
 BLA::Matrix<Nstate> state; // true state vector for simulation
 BLA::Matrix<Nobs> noise;   // additive noise for simulation
 
-#define LOOP_DELAY 10  // add delay in the measurement loop
-#define SIMUL_PERIOD 0.3 // oscillating period [s]
-#define SIMUL_AMP 1.0
+#define LOOP_DELAY 10    // add delay in the measurement loop
 
-float v=0;
-float x=0;
-double SIMULATOR_GAUSS_NOISE();
-void setup() {
+float Vo = 0;
+float Xo = 0;
 
-  Serial.begin(115200);
+void setup()
+{
 
-  // The model below is very simple since matrices are diagonal!
-  
-  // time evolution matrix
-  K.F = {1, 0, dt,
-		 0, 0, 1  };
+    Serial.begin(115200);
 
-  // measurement matrix
-  K.H = {1.0, 0.0,
-         0.0, 1.0};
-  // measurement covariance matrix
-  K.R = {n_p*n_p,   0.0,
-           0.0, n_s*n_s};
-  // model covariance matrix
-  K.Q = {m_p*m_p, 0.0,
-             0.0, m_s*m_s};
-  K.x = {x, v};
+    // time evolution matrix
+    K.F = {1, dt,
+           0, 1};
 
+    // measurement matrix
+    K.H = {1.0, 0.0,
+           0.0, 1.0};
+    // measurement covariance matrix
+    K.R = {v_p, 0.0,
+           0.0      , v_s};
+    // model covariance matrix
+    K.Q = {m_p * m_p, 0.0,
+           0.0      , m_s * m_s};
+    K.x = {Xo, Vo};
 }
 
-void loop() {
-	
-  // APPLY KALMAN FILTER
-  
-  K.update(obs);
+void loop()
+{
 
-  // PRINT RESULTS: true state, measures, estimated state
-  Serial << state << ' ' << obs << ' ' << K.x << ' ' << K.P << '\n';
+    // APPLY KALMAN FILTER
+
+    K.update(obs);
+
+    // PRINT RESULTS: true state, measures, estimated state
+    Serial << state << ' ' << obs << ' ' << K.x << ' ' << K.P << '\n';
+    obs(0) = 0.1;//"measurement_position";
+    obs(1) = 0.1;//"measurement_speed";
 }
 
-void SIMULATOR_INIT(){
-  randomSeed(analogRead(0));
-  state.Fill(0.0);
-  obs.Fill(0.0);
-}
-
-void SIMULATOR_UPDATE(){
-	unsigned long tcur = millis();
-  state(0) = SIMUL_AMP*sin(tcur/1000.0/SIMUL_PERIOD);
-  state(1) = SIMUL_AMP/SIMUL_PERIOD*cos(tcur/1000.0/SIMUL_PERIOD);
-  state(2) = -SIMUL_AMP/SIMUL_PERIOD/SIMUL_PERIOD*sin(tcur/1000.0/SIMUL_PERIOD);
-  
-  noise(0) = n_p * SIMULATOR_GAUSS_NOISE();
-  noise(1) = n_a * SIMULATOR_GAUSS_NOISE();
-  obs = K.H * state + noise; // measure
-  
-  delay(LOOP_DELAY); //add a delay in measurement
-}
-
-double SIMULATOR_GAUSS_NOISE(){
-  // Generate centered reduced Gaussian random number with Box-Muller algorithm
-  double u1 = random(1,10000)/10000.0;
-  double u2 = random(1,10000)/10000.0;
-  return sqrt(-2*log(u1))*cos(2*M_PI*u2);
-}
-*/
 /*
  * Run an example of Kalman filter.
  * This example simulates a sinusoidal position.
@@ -101,12 +72,12 @@ double SIMULATOR_GAUSS_NOISE(){
  *  31 Aug 2019 - Creation
  * 
  */
-
+/*
 #include <Kalman.h>
-using namespace BLA;
+    using namespace BLA;
 
 //------------------------------------
-/****  MODELIZATION PARAMETERS  ****/
+//  MODELIZATION PARAMETERS  
 //------------------------------------
 
 #define Nstate 3 // position, speed, acceleration
@@ -120,12 +91,11 @@ using namespace BLA;
 #define m_s 0.1
 #define m_a 0.8
 
-
-BLA::Matrix<Nobs> obs; // observation vector
-KALMAN<Nstate,Nobs> K; // your Kalman filter
+BLA::Matrix<Nobs> obs;  // observation vector
+KALMAN<Nstate, Nobs> K; // your Kalman filter
 
 //------------------------------------
-/****    SIMULATOR PARAMETERS   ****/
+//    SIMULATOR PARAMETERS   /
 //------------------------------------
 
 unsigned long T;
@@ -134,91 +104,96 @@ float DT;
 BLA::Matrix<Nstate> state; // true state vector for simulation
 BLA::Matrix<Nobs> noise;   // additive noise for simulation
 
-#define LOOP_DELAY 10  // add delay in the measurement loop
+#define LOOP_DELAY 10    // add delay in the measurement loop
 #define SIMUL_PERIOD 0.3 // oscillating period [s]
 #define SIMUL_AMP 1.0
 
 //------------------------------------
-/****        SETUP & LOOP       ****/
+//        SETUP & LOOP       
 //------------------------------------
 double SIMULATOR_GAUSS_NOISE();
 void SIMULATOR_UPDATE();
 void SIMULATOR_INIT();
-void setup() {
+void setup()
+{
 
-  Serial.begin(57600);
+    Serial.begin(57600);
 
-  // The model below is very simple since matrices are diagonal!
-  
-  // time evolution matrix
-  K.F = {1.0, 0.0, 0.0,
-		 0.0, 1.0, 0.0,
-         0.0, 0.0, 1.0};
+    // The model below is very simple since matrices are diagonal!
 
-  // measurement matrix
-  K.H = {1.0, 0.0, 0.0,
-         0.0, 0.0, 1.0};
-  // measurement covariance matrix
-  K.R = {n_p*n_p,   0.0,
-           0.0, n_a*n_a};
-  // model covariance matrix
-  K.Q = {m_p*m_p,     0.0,     0.0,
-             0.0, m_s*m_s,     0.0,
-			 0.0,     0.0, m_a*m_a};
-  
-  T = millis();
-  
-  // INITIALIZE SIMULATION
-  SIMULATOR_INIT();
-  
+    // time evolution matrix
+    K.F = {1.0, 0.0, 0.0,
+           0.0, 1.0, 0.0,
+           0.0, 0.0, 1.0};
+
+    // measurement matrix
+    K.H = {1.0, 0.0, 0.0,
+           0.0, 0.0, 1.0};
+    // measurement covariance matrix
+    K.R = {n_p * n_p, 0.0,
+           0.0, n_a * n_a};
+    // model covariance matrix
+    K.Q = {m_p * m_p, 0.0, 0.0,
+           0.0, m_s * m_s, 0.0,
+           0.0, 0.0, m_a * m_a};
+
+    T = millis();
+
+    // INITIALIZE SIMULATION
+    SIMULATOR_INIT();
 }
 
-void loop() {
-	
-  // TIME COMPUTATION
-  DT = (millis()-T)/1000.0;
-  T = millis();
+void loop()
+{
 
-  K.F = {1.0,  DT,  DT*DT/2,
-		 0.0, 1.0,       DT,
-         0.0, 0.0,      1.0};
+    // TIME COMPUTATION
+    DT = (millis() - T) / 1000.0;
+    T = millis();
 
-  // SIMULATE NOISY MEASUREMENT
-  SIMULATOR_UPDATE();
-  
-  // APPLY KALMAN FILTER
-  K.update(obs);
+    K.F = {1.0, DT, DT * DT / 2,
+           0.0, 1.0, DT,
+           0.0, 0.0, 1.0};
 
-  // PRINT RESULTS: true state, measures, estimated state
-  Serial << state << ' ' << obs << ' ' << K.x << ' ' << K.P << '\n';
+    // SIMULATE NOISY MEASUREMENT
+    SIMULATOR_UPDATE();
+
+    // APPLY KALMAN FILTER
+    K.update(obs);
+
+    // PRINT RESULTS: true state, measures, estimated state
+    Serial << state << ' ' << obs << ' ' << K.x << ' ' << K.P << '\n';
 }
 
 //------------------------------------
-/****     SIMULATOR FUNCTIONS   ****/
+//     SIMULATOR FUNCTIONS   
 //------------------------------------
 
-void SIMULATOR_INIT(){
-  randomSeed(analogRead(0));
-  state.Fill(0.0);
-  obs.Fill(0.0);
+void SIMULATOR_INIT()
+{
+    randomSeed(analogRead(0));
+    state.Fill(0.0);
+    obs.Fill(0.0);
 }
 
-void SIMULATOR_UPDATE(){
-	unsigned long tcur = millis();
-  state(0) = SIMUL_AMP*sin(tcur/1000.0/SIMUL_PERIOD);
-  state(1) = SIMUL_AMP/SIMUL_PERIOD*cos(tcur/1000.0/SIMUL_PERIOD);
-  state(2) = -SIMUL_AMP/SIMUL_PERIOD/SIMUL_PERIOD*sin(tcur/1000.0/SIMUL_PERIOD);
-  
-  noise(0) = n_p * SIMULATOR_GAUSS_NOISE();
-  noise(1) = n_a * SIMULATOR_GAUSS_NOISE();
-  obs = K.H * state + noise; // measure
-  
-  delay(LOOP_DELAY); //add a delay in measurement
+void SIMULATOR_UPDATE()
+{
+    unsigned long tcur = millis();
+    state(0) = SIMUL_AMP * sin(tcur / 1000.0 / SIMUL_PERIOD);
+    state(1) = SIMUL_AMP / SIMUL_PERIOD * cos(tcur / 1000.0 / SIMUL_PERIOD);
+    state(2) = -SIMUL_AMP / SIMUL_PERIOD / SIMUL_PERIOD * sin(tcur / 1000.0 / SIMUL_PERIOD);
+
+    noise(0) = n_p * SIMULATOR_GAUSS_NOISE();
+    noise(1) = n_a * SIMULATOR_GAUSS_NOISE();
+    obs = K.H * state + noise; // measure
+
+    delay(LOOP_DELAY); //add a delay in measurement
 }
 
-double SIMULATOR_GAUSS_NOISE(){
-  // Generate centered reduced Gaussian random number with Box-Muller algorithm
-  double u1 = random(1,10000)/10000.0;
-  double u2 = random(1,10000)/10000.0;
-  return sqrt(-2*log(u1))*cos(2*M_PI*u2);
+double SIMULATOR_GAUSS_NOISE()
+{
+    // Generate centered reduced Gaussian random number with Box-Muller algorithm
+    double u1 = random(1, 10000) / 10000.0;
+    double u2 = random(1, 10000) / 10000.0;
+    return sqrt(-2 * log(u1)) * cos(2 * M_PI * u2);
 }
+*/
