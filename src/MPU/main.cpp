@@ -30,7 +30,7 @@ void initWifiOTA();
 void setup()
 {
     Serial.begin(115200);
-        initWifiOTA();
+    initWifiOTA();
     ArduinoOTA.begin();
     motor1.init();
     try
@@ -54,8 +54,19 @@ void loop()
 
 void tcp()
 {
+    static boolean menu = true;
     if (cl.connected())
     {
+        if (menu)
+        {
+            menu = false;
+            cl.printf("Menu:\r\n");
+            cl.printf("Digite 'E' para relizar medidas\r\n");
+            cl.printf("Digite 'Sxxxx' para setar o numero e samples\r\n");
+            cl.printf("Digite 'Fxxxx' para setar a frequencia\r\n");
+            cl.printf("Digite 'R' para resetar\r\n");
+            cl.printf("Digite: ");
+        }
         if (cl.available() > 0) //Verifica se o cliente conectado tem dados para serem lidos.
         {
             char z = cl.read();
@@ -65,8 +76,9 @@ void tcp()
             switch (z)
             {
             case 'E':
-                cl.printf("Samples :%i\r\n",samples);
-                cl.printf("Freq: %i\r\n",freq);
+            case 'e':
+                cl.printf("Samples :%i\r\n", samples);
+                cl.printf("Freq: %i\r\n", freq);
                 mpu.starRead();
                 while (!mpu.isReadDone())
                     mpu.reading();
@@ -75,11 +87,12 @@ void tcp()
                 for (int i = 0; i < samples - 1; i++)
                     cl.printf(" %f, ", m[i]);
                 cl.printf(" %f ]\r\n", m[samples - 1]);
-                cl.printf("Mean : %f\r\n",mpu.mean());
-                cl.printf("Variance : %f\r\n",mpu.variance());
-                
+                cl.printf("Mean : %f\r\n", mpu.mean());
+                cl.printf("Variance : %f\r\n", mpu.variance());
+
                 break;
             case 'S':
+            case 's':
                 while (cl.available() > 0)
                 {
                     z = cl.read();
@@ -87,9 +100,10 @@ void tcp()
                 }
                 samples = 1000 * (read[0] - 48) + 100 * (read[1] - 48) + 10 * (read[2] - 48) + (read[3] - 48);
                 mpu.setNumSamples(samples);
-                cl.printf("Samples :%i\r\n",samples);
+                cl.printf("Samples :%i\r\n", samples);
                 break;
             case 'F':
+            case 'f':
                 while (cl.available() > 0)
                 {
                     z = cl.read();
@@ -97,9 +111,10 @@ void tcp()
                 }
                 freq = 1000 * (read[0] - 48) + 100 * (read[1] - 48) + 10 * (read[2] - 48) + (read[3] - 48);
                 mpu.setFreq(freq);
-                cl.printf("Freq: %i\r\n",freq);
+                cl.printf("Freq: %i\r\n", freq);
                 break;
             case 'R':
+            case 'r':
                 ESP.restart();
                 break;
             default:

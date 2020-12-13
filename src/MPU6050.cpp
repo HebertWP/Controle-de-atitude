@@ -55,7 +55,6 @@ void MPU6050::starRead()
 
 void MPU6050::reading()
 {
-    Serial.printf("%i\n", _i);
     if (!_reading)
         throw MPU6050::Exception(ERRO_4);
     if (!MPU6050::ready)
