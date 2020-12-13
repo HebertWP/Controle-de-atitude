@@ -3,19 +3,24 @@
 #include <PassWordFile.h>
 #include <ArduinoOTA.h>
 #include "StartSensor.h"
+#include <Actuator.h>
 
-#define LDR1 34
-#define LDR2 35
-#define LDR3 32
-#define LDR4 33
+#define POSITIVE1 33
+#define NEGATIVE1 35
+#define POSITIVE2 34
+#define NEGATIVE2 32
+
+#define AEN 17
+#define A1 18
+#define A2 5
+Actuator motor1(AEN, A1, A2);
 
 WiFiServer sv(555); //Cria o objeto servidor na porta 555
 WiFiClient cl;      //Cria o objeto cliente.
 
 uint16_t samples = 30;
 uint16_t freq = 100;
-StarSensor sens(LDR1, LDR2, LDR3, LDR4, samples
-,freq);
+StarSensor sens(POSITIVE1, NEGATIVE1, POSITIVE2, NEGATIVE2, samples, freq);
 
 void tcp();
 void initWifiOTA();
@@ -25,6 +30,7 @@ void setup()
     Serial.begin(115200);
     initWifiOTA();
     ArduinoOTA.handle();
+    motor1.init();
 }
 
 void loop()
@@ -47,8 +53,8 @@ void tcp()
             {
             case 'E':
             case 'e':
-                cl.printf("Samples :%i\r\n",samples);
-                cl.printf("Freq: %i\r\n",freq);
+                cl.printf("Samples :%i\r\n", samples);
+                cl.printf("Freq: %i\r\n", freq);
                 sens.starRead();
                 while (!sens.isReadDone())
                     sens.reading();
@@ -57,9 +63,9 @@ void tcp()
                 for (int i = 0; i < samples - 1; i++)
                     cl.printf(" %f, ", m[i]);
                 cl.printf(" %f ]\r\n", m[samples - 1]);
-                cl.printf("Mean : %f\r\n",sens.mean());
-                cl.printf("Variance : %f\r\n",sens.variance());
-                
+                cl.printf("Mean : %f\r\n", sens.mean());
+                cl.printf("Variance : %f\r\n", sens.variance());
+
                 break;
             case 'S':
             case 's':
@@ -70,7 +76,7 @@ void tcp()
                 }
                 samples = 1000 * (read[0] - 48) + 100 * (read[1] - 48) + 10 * (read[2] - 48) + (read[3] - 48);
                 sens.setNumSamples(samples);
-                cl.printf("Samples :%i\r\n",samples);
+                cl.printf("Samples :%i\r\n", samples);
                 break;
             case 'F':
             case 'f':
@@ -81,12 +87,27 @@ void tcp()
                 }
                 freq = 1000 * (read[0] - 48) + 100 * (read[1] - 48) + 10 * (read[2] - 48) + (read[3] - 48);
                 sens.setFreq(freq);
-                cl.printf("Freq: %i\r\n",freq);
+                cl.printf("Freq: %i\r\n", freq);
                 break;
             case 'C':
             case 'c':
-                cl.printf("In Calibration\r\n");
-                sens.calibrate(25,26);
+                sens.calibrate(&cl);
+                break;
+            case 'L':
+            case 'l':
+                sens.setNumSamples(10);
+                sens.setFreq(10);
+
+                for (int i = 0; i < 30; i++)
+                {
+                    sens.starRead();
+                    while (!sens.isReadDone())
+                        sens.reading();
+                    m = sens.read();
+                    cl.printf("Mean : %f\r\n", sens.mean());
+                }
+                sens.setFreq(freq);
+                sens.setNumSamples(samples);
                 break;
             case 'R':
             case 'r':
