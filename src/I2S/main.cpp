@@ -1,4 +1,16 @@
 #include <Arduino.h>
+
+void setup()
+{
+
+}
+
+void loop()
+{
+
+}
+/*
+#include <Arduino.h>
 #include "PassWordFile.h"
 #include <I2SMEMSSampler.h>
 #include "ADCSampler.h"
@@ -83,3 +95,4 @@ void loop()
 {
     // nothing to do here - everything is taken care of by tasks
 }
+*/

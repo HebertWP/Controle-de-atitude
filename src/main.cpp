@@ -1,3 +1,15 @@
+#include <Arduino.h>
+
+void setup()
+{
+
+}
+
+void loop()
+{
+    
+}
+/*
 #include "ComunicationSystem.h"
 #include "PassWordFile.h"
 #include <WiFi.h>
@@ -123,3 +135,4 @@ void tcp()
         delay(1);
     }
 }
+*/
