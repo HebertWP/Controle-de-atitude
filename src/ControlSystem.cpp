@@ -1,19 +1,25 @@
+#ifdef ESP32
 #include <Arduino.h>
-#include <ControlSystem.h>
-#include <InertialMesure.h>
-#ifdef ESP
+#include "ControlSystem.h"
+
 SemaphoreHandle_t ControlSystem::_semaphore = NULL;
 Actuator *ControlSystem::_motor1 = NULL;
+StateMeasurement *ControlSystem::_measure = NULL;
+WiFiClient *ControlSystem::_cl = NULL;
+
 bool ControlSystem::_stop = true;
-double ControlSystem::_ki = 1.2;
-double ControlSystem::_kp = 3.0;
+double ControlSystem::_ki = 0;
+double ControlSystem::_kp = 0.5;
 TaskHandle_t ControlSystem::_xHandle = NULL;
 
-void ControlSystem::init(Actuator *motor1)
+void ControlSystem::init(Actuator *motor1, StateMeasurement *measure, WiFiClient *cl)
 {
-
+    ControlSystem::_cl = cl;
     ControlSystem::_stop = true;
     ControlSystem::_motor1 = motor1;
+    ControlSystem::_motor1->init();
+    ControlSystem::_measure = measure;
+    ControlSystem::_measure->init();
     ControlSystem::_semaphore = xSemaphoreCreateBinary();
     if (ControlSystem::_semaphore == NULL)
     {
@@ -24,30 +30,34 @@ void ControlSystem::init(Actuator *motor1)
 
 void ControlSystem::loop(void *arg)
 {
-    double now = 0;
+    State now;
     double sum = 0;
-    static bool sat =false;
+    static bool sat = false;
     while (!ControlSystem::_stop)
     {
         if (xSemaphoreTake(ControlSystem::_semaphore, (TickType_t)20) == pdTRUE)
         {
-            now = (InertialMesure::getRotation())[2];
-            if(!sat)
-                sum += now;
-            float power=now * ControlSystem::_kp + sum * ControlSystem::_ki;
-            if(-0.5 < power && power <0.5)
+            ControlSystem::_measure->starMeasurementCycle();
+            while (!ControlSystem::_measure->isMeasurementDone())
+                ControlSystem::_measure->inMeasurement();
+            now = ControlSystem::_measure->measurement();
+            ControlSystem::_cl->printf("Angular Position: %f; Velocidade angular: %f\r\n", now.angular_position, now.angular_speed);
+            
+            if (!sat)
+                sum += now.angular_position;
+            float power=now.angular_position * ControlSystem::_kp + sum * ControlSystem::_ki;
+            if (-0.5 < power && power < 0.5)
                 ControlSystem::_motor1->setPower(0);
             else
                 ControlSystem::_motor1->setPower(power);
-            if( power < -1 || 1 < power)
-                sat=true;
+            if (power < -1 || 1 < power)
+                sat = true;
             else
-                sat=false;
+                sat = false;
             xSemaphoreGive(ControlSystem::_semaphore);
         }
-        delay(300);
+        delay(1000);
     }
-    while (1);
 }
 
 void ControlSystem::turnOFF()
@@ -74,7 +84,7 @@ void ControlSystem::turnON()
         return;
     ControlSystem::_stop = false;
     xTaskCreate(ControlSystem::loop,
-                "Opr.Loop",
+                "Control Loop",
                 2048,
                 NULL,
                 3,

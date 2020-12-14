@@ -44,7 +44,8 @@ void MPU6050::init()
 
 void MPU6050::starRead()
 {
-    this->checkConnection();
+    if (_reading)
+        return;
     _i = 0;
     _reading = true;
 
@@ -169,7 +170,7 @@ void MPU6050::enableInt(bool on)
 
 void MPU6050::enableFIFO()
 {
-    this->checkConnection();
+    //this->checkConnection();
     this->writeRegMPU(REG_USER_CTRL, USER_CTRL_FIFO_EN | USER_CTRL_FIFO_RST);
 }
 
@@ -251,18 +252,18 @@ void IRAM_ATTR MPU6050::ISR()
 
 float MPU6050::mean()
 {
-    float mean=0;
-    for(int i =0; i <_num_samples ; i++)
-        mean += _samples[i]/_num_samples;
+    float mean = 0;
+    for (int i = 0; i < _num_samples; i++)
+        mean += _samples[i] / _num_samples;
     return mean;
 }
 
 float MPU6050::variance()
 {
-    float mean=this->mean();
-    float variance=0;
-    for(int i =0; i <_num_samples ; i++)
-        variance += ((_samples[i]-mean)*(_samples[i]-mean))/(_num_samples -1 );
+    float mean = this->mean();
+    float variance = 0;
+    for (int i = 0; i < _num_samples; i++)
+        variance += ((_samples[i] - mean) * (_samples[i] - mean)) / (_num_samples - 1);
     return variance;
 }
 #endif

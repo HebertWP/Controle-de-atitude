@@ -34,7 +34,16 @@ void StateMeasurement::init()
 
 void StateMeasurement::starMeasurementCycle()
 {
-    _mpu->starRead();
+    try
+    {
+        _mpu->starRead();
+    }
+    catch (MPU6050::Exception e)
+    {
+        Serial.println(e.what());
+        _mpu->starRead();
+    }
+
     _star->starRead();
 }
 
