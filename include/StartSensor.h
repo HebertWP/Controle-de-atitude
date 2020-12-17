@@ -15,7 +15,7 @@ private:
     {
         int in;
         int out;
-    };
+    }Calibrate;
     
     static StarSensor::Calibrate _p1,_n1,_p2,_n2;
 

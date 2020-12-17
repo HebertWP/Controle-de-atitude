@@ -7,7 +7,6 @@ class Statistic
 public:
     virtual float mean();
     virtual float variance();
-    
 };
 
 #endif

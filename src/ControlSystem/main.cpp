@@ -9,15 +9,17 @@
 #include "StateMeasurement.h"
 #include "Actuator.h"
 #include "ControlSystem.h"
+#include "PID.h"
 
 WiFiServer sv(555); //Cria o objeto servidor na porta 555
 WiFiClient cl;      //Cria o objeto cliente.
 
 #define AEN 17
-#define A1 21
+#define A1 18
 #define A2 5
 Actuator motor1(AEN, A1, A2);
 
+PID pid(1,0,0);
 #define POSITIVE1 33
 #define NEGATIVE1 35
 #define POSITIVE2 34
@@ -38,7 +40,7 @@ void setup()
     initWifiOTA();
     sv.begin();
     ArduinoOTA.handle();
-    ControlSystem::init(&motor1,&state, &cl);
+    ControlSystem::init(&motor1, &state, &pid, &cl);
 }
 void loop()
 {

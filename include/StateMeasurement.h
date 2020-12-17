@@ -13,10 +13,10 @@
 
 // measurement std
 #define v_p 45
-#define v_s 5
+#define v_s 0.7
 // model std (1/inertia)
 #define m_p 45
-#define m_s 5
+#define m_s 0.7
 
 
 typedef struct

@@ -20,23 +20,19 @@ void Actuator::init()
 
 void Actuator::setPower(float power)
 {
+    if (power < -1)
+        power = -1;
+    else if (power > 1)
+        power = 1;
     if (power < 0)
     {
-#if defined(ESP)
         ledcWrite(0, -(power)*255);
-#else
-        analogWrite(_en, -(power)*255);
-#endif
         digitalWrite(_dir1, HIGH);
         digitalWrite(_dir2, LOW);
     }
     else
     {
-#if defined(ESP)
         ledcWrite(0, (power)*255);
-#else
-        analogWrite(_en, (power)*255);
-#endif
         digitalWrite(_dir1, LOW);
         digitalWrite(_dir2, HIGH);
     }

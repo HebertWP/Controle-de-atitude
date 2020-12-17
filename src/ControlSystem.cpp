@@ -2,18 +2,18 @@
 #include <Arduino.h>
 #include "ControlSystem.h"
 
-SemaphoreHandle_t ControlSystem::_semaphore = NULL;
 Actuator *ControlSystem::_motor1 = NULL;
 StateMeasurement *ControlSystem::_measure = NULL;
+PID *ControlSystem::_pid = NULL;
+SemaphoreHandle_t ControlSystem::_semaphore = NULL;
 WiFiClient *ControlSystem::_cl = NULL;
 
 bool ControlSystem::_stop = true;
-double ControlSystem::_ki = 0;
-double ControlSystem::_kp = 0.5;
 TaskHandle_t ControlSystem::_xHandle = NULL;
 
-void ControlSystem::init(Actuator *motor1, StateMeasurement *measure, WiFiClient *cl)
+void ControlSystem::init(Actuator *motor1, StateMeasurement *measure, PID *pid, WiFiClient *cl)
 {
+    ControlSystem::_pid = pid;
     ControlSystem::_cl = cl;
     ControlSystem::_stop = true;
     ControlSystem::_motor1 = motor1;
@@ -31,8 +31,7 @@ void ControlSystem::init(Actuator *motor1, StateMeasurement *measure, WiFiClient
 void ControlSystem::loop(void *arg)
 {
     State now;
-    double sum = 0;
-    static bool sat = false;
+    float power = 0;
     while (!ControlSystem::_stop)
     {
         if (xSemaphoreTake(ControlSystem::_semaphore, (TickType_t)20) == pdTRUE)
@@ -41,22 +40,25 @@ void ControlSystem::loop(void *arg)
             while (!ControlSystem::_measure->isMeasurementDone())
                 ControlSystem::_measure->inMeasurement();
             now = ControlSystem::_measure->measurement();
-            ControlSystem::_cl->printf("Angular Position: %f; Velocidade angular: %f\r\n", now.angular_position, now.angular_speed);
+
+            power = ControlSystem::_pid->UpdateData(now.angular_position);
             
-            if (!sat)
-                sum += now.angular_position;
-            float power=now.angular_position * ControlSystem::_kp + sum * ControlSystem::_ki;
-            if (-0.5 < power && power < 0.5)
+            if (-0.6 < power && power < 0.6)
                 ControlSystem::_motor1->setPower(0);
             else
                 ControlSystem::_motor1->setPower(power);
-            if (power < -1 || 1 < power)
-                sat = true;
-            else
-                sat = false;
+
+            if (ControlSystem::_cl != NULL && ControlSystem::_cl->connected())
+            {
+                ControlSystem::_cl->printf("Angular Position: %f; Velocidade angular: %f;\r\n", now.angular_position, now.angular_speed);
+                ControlSystem::_cl->printf("Power: %f%;\r\n", ControlSystem::_motor1->getPower());
+                ControlSystem::_cl->printf("Ref: %f%;\r\n", ControlSystem::_pid->getSetValue());
+                ControlSystem::_cl->printf("Kp: %f; Ki: %f;\r\n", ControlSystem::_pid->getKp(),ControlSystem::_pid->getKi());
+                ControlSystem::_cl->printf("------------------------\r\n");
+            }
             xSemaphoreGive(ControlSystem::_semaphore);
         }
-        delay(1000);
+        delay(300);
     }
 }
 
@@ -75,7 +77,9 @@ void ControlSystem::turnOFF()
     }
     delay(600);
     ControlSystem::_motor1->setPower(0);
+    ControlSystem::_pid->reset();
     vTaskDelete(ControlSystem::_xHandle);
+
 }
 
 void ControlSystem::turnON()

@@ -5,22 +5,22 @@
 #include <Arduino.h>
 #include "Actuator.h"
 #include "StateMeasurement.h"
+#include "PID.h"
 
 class ControlSystem
 {
 private:
-    static SemaphoreHandle_t _semaphore;
     static Actuator *_motor1;
     static StateMeasurement *_measure;
+    static PID *_pid;
+    static SemaphoreHandle_t _semaphore;
     static bool _stop;
-    static double _kp;
-    static double _ki;
     static TaskHandle_t _xHandle;
     static void loop(void *arg);
     static WiFiClient *_cl;
 
 public:
-    static void init(Actuator *motor1, StateMeasurement *measure, WiFiClient *cl = NULL);
+    static void init(Actuator *motor1, StateMeasurement *measure, PID *pid, WiFiClient *cl = NULL);
     static void turnON();
     static void turnOFF();
 };
