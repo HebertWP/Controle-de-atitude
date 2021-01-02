@@ -10,7 +10,7 @@ Actuator::Actuator(uint8_t en, uint8_t dir1, uint8_t dir2)
 
 void Actuator::init()
 {
-    ledcSetup(0, 5000, 8);
+    ledcSetup(0, 30, 8);
     ledcAttachPin(_en, 0);
     pinMode(_dir1, OUTPUT);
     pinMode(_dir2, OUTPUT);
