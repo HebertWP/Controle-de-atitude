@@ -40,25 +40,20 @@ void ControlSystem::loop(void *arg)
             while (!ControlSystem::_measure->isMeasurementDone())
                 ControlSystem::_measure->inMeasurement();
             now = ControlSystem::_measure->measurement();
-
             power = ControlSystem::_pid->UpdateData(now.angular_position);
-            
-            if (-0.6 < power && power < 0.6)
-                ControlSystem::_motor1->setPower(0);
-            else
-                ControlSystem::_motor1->setPower(power);
-
+            ControlSystem::_motor1->setPower(power);
             if (ControlSystem::_cl != NULL && ControlSystem::_cl->connected())
             {
                 ControlSystem::_cl->printf("Angular Position: %f; Velocidade angular: %f;\r\n", now.angular_position, now.angular_speed);
-                ControlSystem::_cl->printf("Power: %f%;\r\n", ControlSystem::_motor1->getPower());
+                ControlSystem::_cl->printf("Power: %f %;\r\n", ControlSystem::_motor1->getPower());
                 ControlSystem::_cl->printf("Ref: %f%;\r\n", ControlSystem::_pid->getSetValue());
-                ControlSystem::_cl->printf("Kp: %f; Ki: %f;\r\n", ControlSystem::_pid->getKp(),ControlSystem::_pid->getKi());
+                ControlSystem::_cl->printf("Kp: %f; Ki: %f;\r\n", ControlSystem::_pid->getKp(), ControlSystem::_pid->getKi());
+                ControlSystem::_cl->printf("Min: %f; Max: %f;\r\n", ControlSystem::_pid->getScaleMin(), ControlSystem::_pid->getScaleMax());
                 ControlSystem::_cl->printf("------------------------\r\n");
             }
             xSemaphoreGive(ControlSystem::_semaphore);
         }
-        delay(300);
+        delay(600);
     }
 }
 
@@ -79,7 +74,6 @@ void ControlSystem::turnOFF()
     ControlSystem::_motor1->setPower(0);
     ControlSystem::_pid->reset();
     vTaskDelete(ControlSystem::_xHandle);
-
 }
 
 void ControlSystem::turnON()

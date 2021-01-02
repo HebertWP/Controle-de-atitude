@@ -119,10 +119,19 @@ void PID::setScaleMax(float fMax)
 {
     _pidConfig.fMax = fMax;
 }
-
+    
 void PID::setScaleMin(float fMin)
 {
     _pidConfig.fMin = fMin;
+}
+float PID::getScaleMin()
+{
+    return _pidConfig.fMin;
+}
+
+float PID::getScaleMax()
+{
+    return _pidConfig.fMax;
 }
 
 void PID::reset()

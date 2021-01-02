@@ -28,7 +28,7 @@ private:
     int _iStaturationFlag;
 
 public:
-    PID(float fKp = 1, float fKi = 0, float fKd = 0, float fMin = 1, float fMax = -1);
+    PID(float fKp = 1, float fKi = 0, float fKd = 0, float fMin = -1, float fMax = 1);
 
     /* ************************************************** */
     /* Method name:        pid_setKp                      */
@@ -102,6 +102,10 @@ public:
     void setScaleMax(float fMax);
 
     void setScaleMin(float fMin);
+
+    float getScaleMin();
+
+    float getScaleMax();
 
     void reset();
 

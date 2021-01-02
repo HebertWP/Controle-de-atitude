@@ -19,11 +19,11 @@ WiFiClient cl;      //Cria o objeto cliente.
 #define A2 5
 Actuator motor1(AEN, A1, A2);
 
-PID pid(1,0,0);
-#define POSITIVE1 33
+PID pid(0.04, 0.00005);
+#define POSITIVE1 32
 #define NEGATIVE1 35
-#define POSITIVE2 34
-#define NEGATIVE2 32
+#define POSITIVE2 33
+#define NEGATIVE2 34
 
 #define SDAPIN 04
 #define SCLPIN 16
