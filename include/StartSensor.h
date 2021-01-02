@@ -11,13 +11,7 @@ class StarSensor : public Statistic, Sensor
 {
 
 private:
-    typedef struct Calibrate
-    {
-        int in;
-        int out;
-    }Calibrate;
-    
-    static StarSensor::Calibrate _p1,_n1,_p2,_n2;
+    int _p1, _n1, _p2, _n2;
 
     uint8_t _plus_eix_1;
     uint8_t _mine_eix_1;
@@ -41,7 +35,6 @@ public:
                uint8_t negative_pin_eix_2,
                uint16_t num_samples = 10,
                uint16_t freq = 500);
-
 
     void starRead();
 

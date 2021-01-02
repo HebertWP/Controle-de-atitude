@@ -5,10 +5,10 @@
 #include "StartSensor.h"
 #include <Actuator.h>
 
-#define POSITIVE1 33
+#define POSITIVE1 32
 #define NEGATIVE1 35
-#define POSITIVE2 34
-#define NEGATIVE2 32
+#define POSITIVE2 33
+#define NEGATIVE2 34
 
 #define AEN 17
 #define A1 18
