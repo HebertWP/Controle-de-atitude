@@ -52,6 +52,11 @@ public:
 
     void setFreq(uint16_t freq);
 
+    /**
+     * @brief Use this function to Calibrate de LDR 
+     * 
+     * @param cl This funcion will print on Debug terminal 
+     */
     void calibrate(WiFiClient *cl);
 };
 
