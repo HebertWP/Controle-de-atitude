@@ -26,13 +26,13 @@ void StateMeasurement::init()
     _Kalman->Q = {m_p * m_p, 0.0,
                   0.0, m_s * m_s};
 
-    this->starMeasurementCycle();
+    this->startMeasurementCycle();
     while (!this->isMeasurementDone())
         this->inMeasurement();
     _Kalman->x = {_star->mean(), _mpu->mean()};
 }
 
-void StateMeasurement::starMeasurementCycle()
+void StateMeasurement::startMeasurementCycle()
 {
     try
     {

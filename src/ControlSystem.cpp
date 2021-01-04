@@ -36,7 +36,7 @@ void ControlSystem::loop(void *arg)
     {
         if (xSemaphoreTake(ControlSystem::_semaphore, (TickType_t)20) == pdTRUE)
         {
-            ControlSystem::_measure->starMeasurementCycle();
+            ControlSystem::_measure->startMeasurementCycle();
             while (!ControlSystem::_measure->isMeasurementDone())
                 ControlSystem::_measure->inMeasurement();
             now = ControlSystem::_measure->measurement();

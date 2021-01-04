@@ -46,7 +46,7 @@ void tcp()
     State m;
     if (cl.connected())
     {
-        a.starMeasurementCycle();
+        a.startMeasurementCycle();
         while (!a.isMeasurementDone())
             a.inMeasurement();
         m = a.measurement();
