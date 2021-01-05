@@ -19,7 +19,9 @@ WiFiClient cl;      //Cria o objeto cliente.
 #define A2 5
 Actuator motor1(AEN, A1, A2);
 
-PID pid(0.04, 0.00005);
+PID pid1(0.003, 0.0005, 0.003);
+PID pid2(0.00, 0.005, 0.003);
+
 #define POSITIVE1 32
 #define NEGATIVE1 35
 #define POSITIVE2 33
@@ -40,7 +42,7 @@ void setup()
     initWifiOTA();
     sv.begin();
     ArduinoOTA.handle();
-    ControlSystem::init(&motor1, &state, &pid, &cl);
+    ControlSystem::init(&motor1, &state, &pid1, &pid2, &cl);
 }
 void loop()
 {

@@ -12,11 +12,11 @@
 #define Nobs 2   // position, speed
 
 // measurement std
-#define v_p 45
-#define v_s 0.7
+#define v_p 30
+#define v_s 1
 // model std (1/inertia)
-#define m_p 45
-#define m_s 0.7
+#define m_p 30
+#define m_s 1
 
 
 typedef struct

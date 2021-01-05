@@ -18,7 +18,7 @@ StarSensor::StarSensor(uint8_t positive_pin_eix_1, uint8_t negative_pin_eix_1, u
     this->setNumSamples(_num_samples);
     this->setFreq(_freq);
     _p1 = 450;
-    _p2 = 428;
+    _p2 = 500;
     _n2 = 550;
     _n1 = 600;
 }

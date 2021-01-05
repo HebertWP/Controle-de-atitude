@@ -16,7 +16,8 @@ class ControlSystem
 private:
     static Actuator *_motor1;
     static StateMeasurement *_measure;
-    static PID *_pid;
+    static PID *_pid1;
+    static PID *_pid2;
     static SemaphoreHandle_t _semaphore;
     static bool _stop;
     static TaskHandle_t _xHandle;
@@ -33,7 +34,7 @@ public:
      * @param pid pid class, that had ben configured  
      * @param cl for debug 
      */
-    static void init(Actuator *motor1, StateMeasurement *measure, PID *pid, WiFiClient *cl = NULL);
+    static void init(Actuator *motor1, StateMeasurement *measure, PID *pid1, PID *pid2, WiFiClient *cl = NULL);
 
     /**
      * @brief turn ON attitude control

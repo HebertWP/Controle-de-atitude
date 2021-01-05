@@ -4,16 +4,18 @@
 
 Actuator *ControlSystem::_motor1 = NULL;
 StateMeasurement *ControlSystem::_measure = NULL;
-PID *ControlSystem::_pid = NULL;
+PID *ControlSystem::_pid1 = NULL;
+PID *ControlSystem::_pid2 = NULL;
 SemaphoreHandle_t ControlSystem::_semaphore = NULL;
 WiFiClient *ControlSystem::_cl = NULL;
 
 bool ControlSystem::_stop = true;
 TaskHandle_t ControlSystem::_xHandle = NULL;
 
-void ControlSystem::init(Actuator *motor1, StateMeasurement *measure, PID *pid, WiFiClient *cl)
+void ControlSystem::init(Actuator *motor1, StateMeasurement *measure, PID *pid1, PID *pid2, WiFiClient *cl)
 {
-    ControlSystem::_pid = pid;
+    ControlSystem::_pid1 = pid1;
+    ControlSystem::_pid2 = pid2; 
     ControlSystem::_cl = cl;
     ControlSystem::_stop = true;
     ControlSystem::_motor1 = motor1;
@@ -40,15 +42,14 @@ void ControlSystem::loop(void *arg)
             while (!ControlSystem::_measure->isMeasurementDone())
                 ControlSystem::_measure->inMeasurement();
             now = ControlSystem::_measure->measurement();
-            power = ControlSystem::_pid->UpdateData(now.angular_position);
+            power = ControlSystem::_pid2->UpdateData(now.angular_speed);
+            power += ControlSystem::_pid1->UpdateData(now.angular_position);
             ControlSystem::_motor1->setPower(power);
             if (ControlSystem::_cl != NULL && ControlSystem::_cl->connected())
             {
                 ControlSystem::_cl->printf("Angular Position: %f; Velocidade angular: %f;\r\n", now.angular_position, now.angular_speed);
                 ControlSystem::_cl->printf("Power: %f %;\r\n", ControlSystem::_motor1->getPower());
-                ControlSystem::_cl->printf("Ref: %f%;\r\n", ControlSystem::_pid->getSetValue());
-                ControlSystem::_cl->printf("Kp: %f; Ki: %f;\r\n", ControlSystem::_pid->getKp(), ControlSystem::_pid->getKi());
-                ControlSystem::_cl->printf("Min: %f; Max: %f;\r\n", ControlSystem::_pid->getScaleMin(), ControlSystem::_pid->getScaleMax());
+                ControlSystem::_cl->printf("Ref: %f%;\r\n", ControlSystem::_pid1->getSetValue());
                 ControlSystem::_cl->printf("------------------------\r\n");
             }
             xSemaphoreGive(ControlSystem::_semaphore);
@@ -72,7 +73,8 @@ void ControlSystem::turnOFF()
     }
     delay(600);
     ControlSystem::_motor1->setPower(0);
-    ControlSystem::_pid->reset();
+    ControlSystem::_pid1->reset();
+    ControlSystem::_pid2->reset();
     vTaskDelete(ControlSystem::_xHandle);
 }
 
