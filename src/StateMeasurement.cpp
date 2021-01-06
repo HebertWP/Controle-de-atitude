@@ -1,5 +1,3 @@
-#if defined(ESP)
-
 #include <Arduino.h>
 #include "StateMeasurement.h"
 
@@ -80,5 +78,3 @@ State StateMeasurement::measurement()
     out.angular_speed = _Kalman->x(1);
     return out;
 }
-
-#endif

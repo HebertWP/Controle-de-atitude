@@ -1,4 +1,3 @@
-#if defined(ESP32)
 #ifndef __ControlSystem_H__
 #define __ControlSystem_H__
 
@@ -49,5 +48,4 @@ public:
     static void turnOFF();
 };
 
-#endif
 #endif

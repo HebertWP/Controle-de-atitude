@@ -1,4 +1,3 @@
-#ifdef ESP32
 #include <Arduino.h>
 #include "ControlSystem.h"
 
@@ -90,4 +89,3 @@ void ControlSystem::turnON()
                 3,
                 &ControlSystem::_xHandle);
 }
-#endif

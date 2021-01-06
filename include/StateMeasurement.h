@@ -1,4 +1,3 @@
-#if defined(ESP)
 #ifndef __StateMeasurement_H__
 #define __StateMeasurement_H__
 
@@ -84,5 +83,4 @@ public:
     State measurement();
 };
 
-#endif
 #endif
