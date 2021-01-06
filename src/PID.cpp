@@ -19,6 +19,8 @@ PID::PID(float fKp, float fKi, float fKd, float fMin, float fMax)
     this->setScaleMax(fMax);
     this->setScaleMin(fMin);
     this->reset();
+    _SataturationFlagUP = false;
+    _SataturationFlagDOWN = false;
 }
 
 /* ************************************************** */
@@ -119,7 +121,7 @@ void PID::setScaleMax(float fMax)
 {
     _pidConfig.fMax = fMax;
 }
-    
+
 void PID::setScaleMin(float fMin)
 {
     _pidConfig.fMin = fMin;
@@ -136,7 +138,8 @@ float PID::getScaleMax()
 
 void PID::reset()
 {
-    _iStaturationFlag = 0;
+    _SataturationFlagUP = false;
+    _SataturationFlagDOWN = false;
     _pidConfig.fError_previous = 0;
     _pidConfig.fError_sum = 0;
 }
@@ -157,9 +160,10 @@ float PID::UpdateData(float fSensorValue)
     fError = _fSetValue - fSensorValue;
 
     /* if there is no saturation */
-    if (_iStaturationFlag == 0)
+    if ((!_SataturationFlagUP && fError > 0) ||
+        (!_SataturationFlagDOWN && fError < 0))
         _pidConfig.fError_sum += fError;
-
+    
     fDifference = _pidConfig.fError_previous - fError;
 
     fOut = _pidConfig.fKp * fError + _pidConfig.fKi * _pidConfig.fError_sum + _pidConfig.fKd * fDifference;
@@ -169,17 +173,19 @@ float PID::UpdateData(float fSensorValue)
     if (fOut > _pidConfig.fMax)
     {
         fOut = _pidConfig.fMax;
-        _iStaturationFlag = 1;
+        _SataturationFlagUP = true;
     }
-
-    else if (fOut < _pidConfig.fMin)
+    else
+    {
+        _SataturationFlagUP = false;
+    }
+    
+    if (fOut < _pidConfig.fMin)
     {
         fOut = _pidConfig.fMin;
-        _iStaturationFlag = 1;
+        _SataturationFlagDOWN = true;
     }
-
     else
-        _iStaturationFlag = 0;
-
+        _SataturationFlagDOWN = false;
     return fOut;
 }

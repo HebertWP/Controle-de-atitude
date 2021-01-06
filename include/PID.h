@@ -25,7 +25,8 @@ private:
 
     pid_data_type _pidConfig;
     float _fSetValue;
-    int _iStaturationFlag;
+    bool _SataturationFlagUP;
+    bool _SataturationFlagDOWN;
 
 public:
     PID(float fKp = 1, float fKi = 0, float fKd = 0, float fMin = -1, float fMax = 1);
