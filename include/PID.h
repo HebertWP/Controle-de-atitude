@@ -10,6 +10,7 @@
 
 #ifndef SOURCES_CONTROLLER_PID_H_
 #define SOURCES_CONTROLLER_PID_H_
+#include <WiFi.h>
 
 class PID
 {
@@ -121,7 +122,7 @@ public:
     /*                     control reference              */
     /* Output params:      float: New Control effort     */
     /* ************************************************** */
-    float UpdateData(float fSensorValue);
+    float UpdateData(float fSensorValue, WiFiClient *cl = NULL);
 };
 
 #endif /* SOURCES_CONTROLLER_PID_H_ */

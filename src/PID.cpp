@@ -153,17 +153,17 @@ void PID::reset()
 /*                     the sensor                     */
 /* Output params:      float: New Control effort     */
 /* ************************************************** */
-float PID::UpdateData(float fSensorValue)
+float PID::UpdateData(float fSensorValue, WiFiClient *cl)
 {
     float fError, fDifference, fOut;
 
     fError = _fSetValue - fSensorValue;
 
     /* if there is no saturation */
-    if ((!_SataturationFlagUP && fError > 0) ||
-        (!_SataturationFlagDOWN && fError < 0))
+    if ((!_SataturationFlagDOWN && fError * _pidConfig.fKp < 0) ||
+        (!_SataturationFlagUP && fError * _pidConfig.fKp > 0))
         _pidConfig.fError_sum += fError;
-    
+
     fDifference = _pidConfig.fError_previous - fError;
 
     fOut = _pidConfig.fKp * fError + _pidConfig.fKi * _pidConfig.fError_sum + _pidConfig.fKd * fDifference;
@@ -179,7 +179,7 @@ float PID::UpdateData(float fSensorValue)
     {
         _SataturationFlagUP = false;
     }
-    
+
     if (fOut < _pidConfig.fMin)
     {
         fOut = _pidConfig.fMin;
@@ -187,5 +187,16 @@ float PID::UpdateData(float fSensorValue)
     }
     else
         _SataturationFlagDOWN = false;
+    if (cl != NULL)
+    {
+        cl->printf("PID print\r\n");
+        cl->printf("Erro propotion: %f\r\n", fError);
+        cl->printf("Erro difference: %f\r\n", fDifference);
+        cl->printf("Erro integration: %f\r\n", _pidConfig.fError_sum);
+        if (_SataturationFlagDOWN)
+            cl->printf("Daturation in DOWN\r\n");
+        if (_SataturationFlagUP)
+            cl->printf("Daturation in UP\r\n");
+    }
     return fOut;
 }
