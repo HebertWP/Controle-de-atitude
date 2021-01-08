@@ -164,6 +164,12 @@ float PID::UpdateData(float fSensorValue, WiFiClient *cl)
         (!_SataturationFlagUP && fError * _pidConfig.fKp > 0))
         _pidConfig.fError_sum += fError;
 
+    if(_pidConfig.fError_sum > 50 *_pidConfig.fMax)
+        _pidConfig.fError_sum = 45 *_pidConfig.fMax;
+    
+    if(_pidConfig.fError_sum < 50 *_pidConfig.fMin)
+        _pidConfig.fError_sum = 45 *_pidConfig.fMin;
+    
     fDifference = _pidConfig.fError_previous - fError;
 
     fOut = _pidConfig.fKp * fError + _pidConfig.fKi * _pidConfig.fError_sum + _pidConfig.fKd * fDifference;

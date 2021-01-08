@@ -14,7 +14,7 @@ TaskHandle_t ControlSystem::_xHandle = NULL;
 void ControlSystem::init(Actuator *motor1, StateMeasurement *measure, PID *pid1, PID *pid2, WiFiClient *cl)
 {
     ControlSystem::_pid1 = pid1;
-    ControlSystem::_pid2 = pid2; 
+    ControlSystem::_pid2 = pid2;
     ControlSystem::_cl = cl;
     ControlSystem::_stop = true;
     ControlSystem::_motor1 = motor1;
@@ -41,8 +41,8 @@ void ControlSystem::loop(void *arg)
             while (!ControlSystem::_measure->isMeasurementDone())
                 ControlSystem::_measure->inMeasurement();
             now = ControlSystem::_measure->measurement();
-            power = ControlSystem::_pid2->UpdateData(now.angular_speed);
-            power += ControlSystem::_pid1->UpdateData(now.angular_position);
+            //power = ControlSystem::_pid2->UpdateData(now.angular_speed, ControlSystem::_cl);
+            power = ControlSystem::_pid1->UpdateData(now.angular_position, ControlSystem::_cl);
             ControlSystem::_motor1->setPower(power);
             if (ControlSystem::_cl != NULL && ControlSystem::_cl->connected())
             {
@@ -53,7 +53,7 @@ void ControlSystem::loop(void *arg)
             }
             xSemaphoreGive(ControlSystem::_semaphore);
         }
-        delay(600);
+        delay(333);
     }
 }
 
